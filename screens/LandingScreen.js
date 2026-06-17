@@ -15,6 +15,8 @@ import {
   Easing,
   Dimensions,
 } from "react-native";
+// Added Ionicons import for the eye icon
+import { Ionicons } from "@expo/vector-icons"; 
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const HEADER_HEIGHT = 0; // Yellow part shrinks to 0
@@ -25,6 +27,10 @@ export default function CombinedLandingAuthScreen({ navigation }) {
   const [formMounted, setFormMounted] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // Added states for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -55,14 +61,14 @@ export default function CombinedLandingAuthScreen({ navigation }) {
       Animated.parallel([
         Animated.timing(taglineOpacity, {
           toValue: 1,
-          duration: 1200, // Slower fade in
+          duration: 1200,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.spring(logoSize, {
           toValue: 200,
-          friction: 10, // Increased friction for a softer bounce
-          tension: 25,  // Decreased tension so it's not as stiff/jumpy
+          friction: 10,
+          tension: 25,
           useNativeDriver: false,
         }),
       ]).start();
@@ -74,11 +80,10 @@ export default function CombinedLandingAuthScreen({ navigation }) {
     setFormMounted(true);
 
     Animated.parallel([
-      // 1. Header Collapse (Much slower and smoother curve)
       Animated.timing(headerHeight, {
         toValue: HEADER_HEIGHT,
-        duration: 1400, // Slowed down from 700 to 1400
-        easing: Easing.bezier(0.42, 0, 0.58, 1), // Smooth ease-in-out
+        duration: 1400,
+        easing: Easing.bezier(0.42, 0, 0.58, 1),
         useNativeDriver: false,
       }),
       Animated.timing(borderRadius, {
@@ -87,35 +92,29 @@ export default function CombinedLandingAuthScreen({ navigation }) {
         easing: Easing.bezier(0.42, 0, 0.58, 1),
         useNativeDriver: false,
       }),
-
-      // 2. Fade out old content (Logo, tagline, button)
       Animated.timing(headerContentOpacity, {
         toValue: 0,
-        duration: 600, // Slower fade out
+        duration: 600,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(logoSize, {
         toValue: 0,
         duration: 600,
-        easing: Easing.out(Easing.cubic), // Smoother than exp
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }),
-
-      // 3. Fade in new Auth Title (Starts while header is still collapsing)
       Animated.timing(authTitleOpacity, {
         toValue: 1,
-        duration: 800, // Longer fade in
-        delay: 600,    // Delayed to start right as old content finishes fading
+        duration: 800,
+        delay: 600,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-
-      // 4. Fade/Slide in Form (Starts near the end of the header collapse)
       Animated.timing(formOpacity, {
         toValue: 1,
         duration: 800,
-        delay: 900, // Pushed back so it cascades nicely
+        delay: 900,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -123,7 +122,7 @@ export default function CombinedLandingAuthScreen({ navigation }) {
         toValue: 0,
         duration: 800,
         delay: 900,
-        easing: Easing.out(Easing.cubic), // Decelerates gently into place
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -138,7 +137,7 @@ export default function CombinedLandingAuthScreen({ navigation }) {
         Animated.parallel([
           Animated.timing(signupFade, {
             toValue: 1,
-            duration: 600, // Slower from 400 to 600
+            duration: 600,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
           }),
@@ -153,8 +152,8 @@ export default function CombinedLandingAuthScreen({ navigation }) {
         Animated.parallel([
           Animated.timing(signupFade, {
             toValue: 0,
-            duration: 400, // Slower from 200 to 400
-            easing: Easing.in(Easing.quad), // Ease-in for disappearing
+            duration: 400,
+            easing: Easing.in(Easing.quad),
             useNativeDriver: true,
           }),
           Animated.timing(signupSlide, {
@@ -321,14 +320,28 @@ export default function CombinedLandingAuthScreen({ navigation }) {
                   <Text style={styles.errorText}>{errors.email}</Text>
                 )}
 
-                <TextInput
-                  style={[styles.input, errors.password && styles.inputError]}
-                  placeholder="Password"
-                  placeholderTextColor="#aab3b6"
-                  secureTextEntry
-                  value={formData.password}
-                  onChangeText={(text) => handleInputChange("password", text)}
-                />
+                {/* Password Field with Eye Icon */}
+                <View style={[styles.inputContainer, errors.password && styles.inputError]}>
+                  <TextInput
+                    style={styles.inputWithIcon}
+                    placeholder="Password"
+                    placeholderTextColor="#aab3b6"
+                    secureTextEntry={!showPassword} // Toggles based on state
+                    value={formData.password}
+                    onChangeText={(text) => handleInputChange("password", text)}
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeButton} 
+                    onPress={() => setShowPassword(!showPassword)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons 
+                      name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                      size={22} 
+                      color="#7f8c8d" 
+                    />
+                  </TouchableOpacity>
+                </View>
                 {errors.password && (
                   <Text style={styles.errorText}>{errors.password}</Text>
                 )}
@@ -340,19 +353,30 @@ export default function CombinedLandingAuthScreen({ navigation }) {
                       transform: [{ translateY: signupSlide }],
                     }}
                   >
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.confirmPassword && styles.inputError,
-                      ]}
-                      placeholder="Confirm Password"
-                      placeholderTextColor="#aab3b6"
-                      secureTextEntry
-                      value={formData.confirmPassword}
-                      onChangeText={(text) =>
-                        handleInputChange("confirmPassword", text)
-                      }
-                    />
+                    {/* Confirm Password Field with Eye Icon */}
+                    <View style={[styles.inputContainer, errors.confirmPassword && styles.inputError]}>
+                      <TextInput
+                        style={styles.inputWithIcon}
+                        placeholder="Confirm Password"
+                        placeholderTextColor="#aab3b6"
+                        secureTextEntry={!showConfirmPassword} // Toggles based on state
+                        value={formData.confirmPassword}
+                        onChangeText={(text) =>
+                          handleInputChange("confirmPassword", text)
+                        }
+                      />
+                      <TouchableOpacity 
+                        style={styles.eyeButton} 
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons 
+                          name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                          size={22} 
+                          color="#7f8c8d" 
+                        />
+                      </TouchableOpacity>
+                    </View>
                     {errors.confirmPassword && (
                       <Text style={styles.errorText}>
                         {errors.confirmPassword}
@@ -520,6 +544,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  // Normal input (kept for email and username)
   input: {
     height: 55,
     backgroundColor: "#ffffff",
@@ -535,6 +560,36 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: "transparent",
+  },
+  // New container for inputs that have icons inside them (Password fields)
+  inputContainer: {
+    height: 55,
+    backgroundColor: "#ffffff",
+    borderRadius: 30,
+    paddingHorizontal: 25,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#cfd8dc",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  // Style for the text input that sits inside the inputContainer
+  inputWithIcon: {
+    flex: 1,
+    height: "100%",
+    fontSize: 16,
+    color: "#333",
+    paddingVertical: 0, // Removes default padding to center text properly
+  },
+  // Button wrapping the eye icon
+  eyeButton: {
+    padding: 10,
+    marginLeft: 10, // Space between text and icon
   },
   inputError: {
     borderColor: "#ff6b6b",
